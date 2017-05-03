@@ -7,7 +7,7 @@ import pickle
 Y = [] #list of label
 df = [] #dataset of words each row
 #----------------------------------get data from dev set time.txt----------------------------------
-texts = open("train_set.txt",'r', encoding='utf-8')
+texts = open("train_set.txt",'r')
 for text in texts :
     # -----------split all words in string to list----------------
     words = text.split()
@@ -15,7 +15,7 @@ for text in texts :
     Y.append(0)
 
 #----------------------------------get data from dev what time.txt----------------------------------
-texts = open("train_time.txt",'r', encoding='utf-8')
+texts = open("train_time.txt",'r')
 for text in texts :
     # -----------split all words in string to list----------------
     words = text.split()
@@ -23,7 +23,7 @@ for text in texts :
     Y.append(1)
 
 #----------------------------------get data from dev postpone .txt----------------------------------
-texts = open("train_postpone.txt",'r', encoding='utf-8')
+texts = open("train_postpone.txt",'r')
 for text in texts :
     # -----------split all words in string to list----------------
     words = text.split()
@@ -31,7 +31,7 @@ for text in texts :
     Y.append(2)
 
 #----------------------------------get data from dev postpone .txt----------------------------------
-texts = open("train_task.txt",'r', encoding='utf-8')
+texts = open("train_task.txt",'r')
 for text in texts :
     # -----------split all words in string to list----------------
     words = text.split()
@@ -44,13 +44,13 @@ def token(x):
     return x.split(' ')
 countT = CountVectorizer(min_df=1,ngram_range=(1, 1), tokenizer=token)
 countT.fit_transform(df)
-pickle._dump(countT, open("countT.sav",'wb'))
+pickle.dump(countT, open("countT.sav",'wb'))
 count = countT.transform(df)
 
 #----------------------train model from data and store---------------------------------------------
 clf = MultinomialNB()
 clf.fit(count,Y)
-pickle._dump(clf,open("clf.sav",'wb'))
+pickle.dump(clf,open("clf.sav",'wb'))
 # In[3]
 #-----------------------get predicted label from model-----------------------------------
 y_pred = clf.predict(count)

@@ -11,7 +11,7 @@ import json
 from client import speechToText
 import pickle
 import wave
-from utilities.response_text import generateResponseText
+from response_text import generateResponseText
 
 public_root = os.path.join(os.path.dirname(__file__), 'static')
 
@@ -49,32 +49,34 @@ class RecogHandler(tornado.web.RequestHandler):
         fileinfo = self.request.files
         file_body = self.request.files['filearg'][0]['body']
         r = sr.Recognizer()
-        f = wave.open(io.BytesIO(file_body), 'r')
-        out = speechToText(f)
-        self.write(out)
+        # f = wave.open(io.BytesIO(file_body), 'r')
+        # out = speechToText(f)
+        # self.write(out)
         # #-------------------get audio------------------------
-        # with sr.AudioFile(io.BytesIO(file_body)) as source:
-        #     audio = r.listen(source)
-        # try:
-        #     print("analyse")
-        #     # out = getJSONResponse(file_body)
-        #     # print(type(file_body))
-        #     # print(type(audio.get_raw_data()))
-            # out = r.recognize_google(audio,language="th-TH")
+        with sr.AudioFile(io.BytesIO(file_body)) as source:
+            audio = r.listen(source)
+        try:
+            print("analyse")
+            # out = getJSONResponse(file_body)
+            # print(type(file_body))
+            # print(type(audio.get_raw_data()))
+            out = r.recognize_google(audio,language="th-TH")
+            self.write(out)
         #
-        # except sr.RequestError as e:
-        #     self.write("Could not understand audio")
+        except sr.RequestError as e:
+            self.write("Could not understand audio")
 
 class ResponseHandler(tornado.web.RequestHandler):
     def post(self):
-        out = tornado.escape.json_decode(self.request.body)
+        out = tornado.escape.json_decode(self.request.body.decode('utf-8'))
+        # print(out)
         df = [out['text']]
         count = countT.transform(df)
         y_pred = model.predict(count)
-        print(out['text'])
-        print(y_pred[0])
+        # print(out['text'])
+        # print(y_pred[0])
         tell = generateResponseText(out['text'], y_pred[0])
-        print(tell)
+        # print(tell)
         self.write(tell)
 
 def make_app():

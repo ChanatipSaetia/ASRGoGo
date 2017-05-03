@@ -1,3 +1,4 @@
+#coding=utf-8
 import tornado.ioloop
 import tornado.web
 import tornado
@@ -7,8 +8,10 @@ import os
 import speech_recognition as sr
 import http
 import json
+from client import speechToText
 import pickle
-from utilities.response_text import generateResponseText
+import wave
+from response_text import generateResponseText
 
 public_root = os.path.join(os.path.dirname(__file__), 'static')
 
@@ -21,7 +24,7 @@ def token(x):
 #-----------------------read model------------------------------
 model = pickle.load(open("dev/clf.sav","rb"))
 countT = pickle.load(open("dev/countT.sav","rb"))
-print(generateResponseText('โกวาจี',0))
+# print(generateResponseText('โกวาจี',0))
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -41,32 +44,46 @@ def getJSONResponse(audio):
         print("Error: " + str(e))
         return str(e)
 
-class FileHandler(tornado.web.RequestHandler):
+class RecogHandler(tornado.web.RequestHandler):
     def post(self):
         fileinfo = self.request.files
-        # print "fileinfo is", fileinfo
         file_body = self.request.files['filearg'][0]['body']
-        print("please say something")
         r = sr.Recognizer()
-        #-------------------get audio------------------------
+        # f = wave.open(io.BytesIO(file_body), 'r')
+        # out = speechToText(f)
+        # self.write(out)
+        # #-------------------get audio------------------------
         with sr.AudioFile(io.BytesIO(file_body)) as source:
             audio = r.listen(source)
         try:
             print("analyse")
-            out = r.recognize_google(audio,language="th-TH")
             # out = getJSONResponse(file_body)
-            df = [out]
-            count = countT.transform(df)
-            y_pred = model.predict(count)
-            tell = generateResponseText(out,y_pred)
-            self.write(tell)
+            # print(type(file_body))
+            # print(type(audio.get_raw_data()))
+            out = r.recognize_google(audio,language="th-TH")
+            self.write(out)
+        #
         except sr.RequestError as e:
             self.write("Could not understand audio")
+
+class ResponseHandler(tornado.web.RequestHandler):
+    def post(self):
+        out = tornado.escape.json_decode(self.request.body.decode('utf-8'))
+        # print(out)
+        df = [out['text']]
+        count = countT.transform(df)
+        y_pred = model.predict(count)
+        # print(out['text'])
+        # print(y_pred[0])
+        tell = generateResponseText(out['text'], y_pred[0])
+        # print(tell)
+        self.write(tell)
 
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
-        (r"/test", FileHandler),
+        (r"/recog", RecogHandler),
+        (r"/response", ResponseHandler),
         (r'/(.*)', tornado.web.StaticFileHandler, {'path': public_root}),
     ], debug=True)
 

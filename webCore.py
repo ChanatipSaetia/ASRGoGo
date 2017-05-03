@@ -1,3 +1,4 @@
+#coding=utf-8
 import tornado.ioloop
 import tornado.web
 import tornado
@@ -23,7 +24,7 @@ def token(x):
 #-----------------------read model------------------------------
 model = pickle.load(open("dev/clf.sav","rb"))
 countT = pickle.load(open("dev/countT.sav","rb"))
-print(generateResponseText('โกวาจี',0))
+# print(generateResponseText('โกวาจี',0))
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
